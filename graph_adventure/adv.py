@@ -21,10 +21,233 @@ player = Player("Name", world.startingRoom)
 
 
 # FILL THIS IN
-traversalPath = ['n', 's']
+
+class Stack():
+    def __init__(self):
+        self.stack = []
+    def push(self, value):
+        self.stack.append(value)
+    def pop(self):
+        if self.size() > 0:
+            return self.stack.pop()
+        else:
+            return None
+    def size(self):
+        return len(self.stack)
+
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
+
+# def makePath(player):
+
+#     graph = {}
+    
+#     visited = [player.currentRoom.id]
+#     qyoo = [player.currentRoom.id]
+
+#     while len(qyoo) > 0:
+#         # print (len(qyoo))
+#         room = qyoo.pop(0)
+#         graph[room] = {}
+
+#         exits = player.currentRoom.getExits()
+
+#         for r in exits:
+#             graph[room][r] = '?'
+
+
+#     return graph
+
+def makePath(player, roomGraph):
+
+    graph = {}
+    path = []
+    count = 0
+
+    while len(graph) < len(roomGraph):
+        print(f'graph is this long: {len(graph)}')
+    
+        notExplored = []
+        
+        exits = player.currentRoom.getExits()
+        
+        current = player.currentRoom.id
+
+        if current not in graph:
+            graph[current] = {}
+            for r in exits:
+                graph[current][r] = '?'
+        
+        for direction, room in graph[current].items():
+            if room == "?":    
+                notExplored.append(direction)
+
+        if len(notExplored) > 0:
+            nextMove = getRandomDirection(notExplored)
+            player.travel(nextMove)
+            print(f'Now Im in room {player.currentRoom.id}')
+            graph[current][nextMove] = player.currentRoom.id
+            backOne = flipDirection(nextMove)
+            # graph[player.currentRoom.id][backOne] = current
+            path.append(nextMove)
+            notExplored = []
+            count += 1
+        else: 
+            q = Queue()
+            q.enqueue([current])
+
+            checked = []
+            returnPath = []
+
+            while q.size() > 0:
+                checkPath = q.dequeue()
+                v = checkPath[-1]
+                print(f'graph of v is {graph[v]}')
+                # room = graph[v]
+
+                if v not in returnPath:
+                    if any(graph[v][x] == "?" for x in graph[v]):
+                        returnPath = checkPath
+                        break
+                        print(f'the checkpath is {checkPath}')
+                    returnPath.append(v)
+                    for way, to in graph[v].items():
+                        print(f'appending discovered room {to}')
+                        new_path = list(checkPath)
+                        new_path.append(to)
+                        print(f'enqueing new path {new_path}')
+                        q.enqueue(new_path)
+
+            steps = []
+
+            print(f'your return path is {returnPath}')
+            print(f'length of returnPath -2 {len(returnPath) - 1}')
+            for i in range(0, len(returnPath) - 1):
+                for direction, to in graph[returnPath[i]].items():
+                    print(f'direction: {direction} to: {to}')
+                    if to == returnPath[i + 1]:
+                        steps.append(direction)
+            path = path + steps
+            for step in steps:
+                player.travel(step)
+            
+            print (f'your steps are {steps}')
+
+
+            # steps
+
+
+    return path
+
+def flipDirection(direction):
+    if direction == 'n':
+        return 's'
+    elif direction =='e':
+        return 'w'
+    elif direction == 's':
+        return 'n'
+    elif direction == 'w':
+        return 'e'
+
+def goBack(player, graph):
+    print(f'Room we in now {player.currentRoom.id}')
+    print(f'Exits are: {player.currentRoom.getExits()}')
+    current = player.currentRoom.id
+    print(f'Current room is: {current}')
+    q = Queue()
+    q.enqueue([current])
+    checked = []
+    pathTaken= []
+
+    print( graph[0] )
+
+    while q.size() > 0:
+        checkPath = q.dequeue()
+        v = checkPath[-1]
+
+        # if v not in checked:
+        #     checked.append(v)
+        current = player.currentRoom.id
+        print(f'current room is {current}')
+        exits = player.currentRoom.getExits()
+
+        if any(graph[current][x] == "?" for x in exits):
+            makePath(player, roomGraph)
+        else:
+
+            direction = getRandomDirection(exits)
+            player.travel(direction)
+            pathTaken.append(direction)
+            new_path = list(checkPath)
+            new_path.append(player.currentRoom.id)
+            q.enqueue(new_path)
+            checked = new_path
+                #implement queue/breadth first search here?
+
+            # if graph[current]['n'] and graph[current]['n'] == '?':
+            #     player.travel('n')
+            #     graph[current]['n'] = player.currentRoom.id
+            #     print(graph[current]['n'])
+            #     s.push(player.currentRoom.id)
+            # elif graph[current]['e'] and graph[current]['e'] == '?':
+            #     graph[current]['e'] = player.currentRoom.id
+            #     player.travel('e')
+            #     s.push(player.currentRoom.id)
+            # elif graph[current]['s'] and graph[current]['s'] == '?':
+            #     graph[current]['s'] = player.currentRoom.id
+            #     player.travel('s')
+            #     s.push(player.currentRoom.id)
+            # elif graph[current]['w'] and graph[current]['w'] == '?':
+            #     graph[current]['w'] = player.currentRoom.id
+            #     player.travel('w')
+            #     s.push(player.currentRoom.id)
+
+            # for exit in exits:
+            #     if graph[current][exit] == '?':
+            #         player.travel(exit)
+
+    
+    return pathTaken
+
+def getRandomDirection(exits):
+    print(f'Exits are {exits}')
+    chosenExit = exits[random.randrange(0, len(exits), 1)]
+    print(f'Im going to randomly walk {chosenExit}')
+    return chosenExit
+
+def randomWalk(room, graph, path=[]):
+    exits = player.currentRoom.getExits()
+    pickDirection = getRandomDirection(exits)
+    player.travel(pickDirection)
+    newExits = player.currentRoom.getExits()
+    current = player.currentRoom.id
+
+    if any(graph[current][x] == "?" for x in newExits):
+        return path
+    else:
+        path.append(pickDirection)
+        randomWalk(current, graph)
+
+
+
+traversalPath = makePath(player, roomGraph)
+print(traversalPath)
+
+
 
 
 # TRAVERSAL TEST
+
 visited_rooms = set()
 player.currentRoom = world.startingRoom
 visited_rooms.add(player.currentRoom)
